@@ -1,0 +1,26 @@
+{
+    "name": "KafkaSortByTimestampPiece",
+    "description": "Sort Kafka messages by timestamp.",
+    "dependency": {
+        "dockerfile": "Dockerfile"
+    },
+    "container_resources": {
+        "requests": {
+            "cpu": 100,
+            "memory": 128
+        },
+        "limits": {
+            "cpu": 500,
+            "memory": 512
+        }
+    },
+    "tags": [
+        "Kafka",
+        "processing",
+        "stream"
+    ],
+    "style": {
+        "node_label": "Sort by timestamp",
+        "icon_class_name": "fa7-solid:arrow-down-1-9"
+    }
+}
