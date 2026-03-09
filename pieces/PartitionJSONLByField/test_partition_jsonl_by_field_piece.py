@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @skip_envs('github')
-def test_split_by_key_piece():
+def test_partition_jsonl_by_field_piece_local():
     input_data = {
         'input_file': 'data/messages.jsonl',
         'output_dir': 'output-split',

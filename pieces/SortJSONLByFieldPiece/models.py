@@ -3,12 +3,14 @@ from pydantic import BaseModel, Field
 
 class InputModel(BaseModel):
     input_file: str = Field(
+        ...,
         title="Input JSONL File",
         description="Path to the input JSONL file containing messages to process.",
     )
     output_file: str = Field(
+        ...,
         title="Output JSONL File",
-        description="Path where the extracted JSON messages will be written.",
+        description="Path to the output JSONL file.",
     )
     field: str = Field(
         ...,
@@ -24,7 +26,7 @@ class InputModel(BaseModel):
 
 class OutputModel(BaseModel):
     output_file: str = Field(
-        ...,
-        title="Output JSONL File Path",
-        description="Path to the output JSONL file containing extracted JSON values.",
+        title="output.file",
+        default="messages.jsonl",
+        description="Path to the final sorted JSONL output file.",
     )
