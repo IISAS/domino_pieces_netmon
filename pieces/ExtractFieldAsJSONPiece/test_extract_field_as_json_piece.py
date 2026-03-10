@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 @skip_envs('github')
 def test_extract_field_as_json_piece_local():
     input_data = {
-        'input_file': 'dry_run_results/output-split/conn/messages.jsonl',
-        'output_file': 'output-values/conn/messages.jsonl',
+        'input_file': 'dry_run_results/output-split/dns/messages.jsonl',
+        'output_file': 'output-values/dns/messages.jsonl',
         'field': 'value',
         'num_workers': 10
     }

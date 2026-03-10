@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 def test_sort_jsonl_by_field_piece_local():
     """Integration test using existing dataset."""
     input_data = {
-        "input_file": "dry_run_results/output-values/conn/messages.jsonl",
-        "output_file": "output-sort/messages.jsonl",
+        "input_file": "dry_run_results/output-values/dns/messages.jsonl",
+        "output_file": "output-sort/dns/messages.jsonl",
         "field": "ts_end",
         "num_workers": 4,
     }
@@ -48,7 +48,7 @@ def test_sort_jsonl_by_field_piece():
         tmpdir = Path(tmpdir)
 
         input_file = tmpdir / "input.jsonl"
-        output_file = "sorted/messages.jsonl"
+        output_file = tmpdir / "sorted.jsonl"
 
         # Generate random JSONL data
         records = []
@@ -67,7 +67,7 @@ def test_sort_jsonl_by_field_piece():
 
         input_data = {
             "input_file": str(input_file),
-            "output_file": output_file,
+            "output_file": str(output_file),
             "field": "ts_end",
             "num_workers": 4,
         }
