@@ -15,8 +15,10 @@ class PartitionJSONLByField(BasePiece):
 
     def piece_function(self, input_data: InputModel):
         input_path = Path(input_data.input_file)
-        output_dir = Path(self.results_path) / input_data.output_dir
-        output_dir.mkdir(parents=True, exist_ok=True)
+
+        output_dir = Path(input_data.output_dir)
+        if not output_dir.is_absolute():
+            output_dir = Path(self.results_path) / output_dir
 
         partitions: dict[str, str] = {}
         open_files: "OrderedDict[str, object]" = OrderedDict()

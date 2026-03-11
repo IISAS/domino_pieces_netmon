@@ -80,9 +80,11 @@ class SortJSONLByFieldPiece(BasePiece):
             f.unlink(missing_ok=True)
 
     def piece_function(self, input_data: InputModel):
-        input_path = Path(input_data.input_file)
-        output_path = Path(self.results_path) / input_data.output_file
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        input_file = Path(input_data.input_file)
+
+        output_file = Path(input_data.output_file)
+        if not output_file.is_absolute():
+            output_file = Path(self.results_path) / output_file
 
         temp_files: List[Path] = []
         self.num_workers = input_data.num_workers
@@ -97,20 +99,20 @@ class SortJSONLByFieldPiece(BasePiece):
             ]
 
             # Start single reader
-            reader_task = asyncio.create_task(self._reader(input_path, chunk_queue))
+            reader_task = asyncio.create_task(self._reader(input_file, chunk_queue))
 
             await reader_task
             await asyncio.gather(*workers)
 
             # Merge sorted chunks
-            await self._merge_sorted_chunks(temp_files, output_path, input_data.field)
+            await self._merge_sorted_chunks(temp_files, output_file, input_data.field)
 
         asyncio.run(main())
 
         self.logger.info(
             "Sorting complete: %s by field '%s' using %d workers",
-            str(output_path),
+            str(output_file),
             input_data.field,
             self.num_workers,
         )
-        return OutputModel(output_file=str(output_path))
+        return OutputModel(output_file=str(output_file))

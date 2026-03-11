@@ -298,8 +298,10 @@ class TimeWindowAggregationJSONLPiece(BasePiece):
     def piece_function(self, input_data: InputModel):
 
         input_file = Path(input_data.input_file)
-        output_file = Path(self.results_path) / input_data.output_file
-        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        output_file = Path(input_data.output_file)
+        if not output_file.is_absolute():
+            output_file = Path(self.results_path) / output_file
 
         field = input_data.field
         self.num_workers = input_data.num_workers
