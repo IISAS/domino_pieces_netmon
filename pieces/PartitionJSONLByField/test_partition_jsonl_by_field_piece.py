@@ -36,6 +36,7 @@ def test_partition_jsonl_by_field_piece_local():
             logger.info("Partition '%s' has %d lines", key, len(lines))
 
 
+@skip_envs("github")
 def test_partition_jsonl_by_field_piece():
     # Create a temporary directory for input and output
     with tempfile.TemporaryDirectory() as tmp_dir:

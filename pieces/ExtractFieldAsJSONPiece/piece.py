@@ -14,16 +14,6 @@ class ExtractFieldAsJSONPiece(BasePiece):
     buffer_size = 1000  # lines per batch write
     num_workers = 4  # number of concurrent parser tasks
 
-    @staticmethod
-    def parse_value(value):
-        if isinstance(value, str):
-            value_parsed = orjson.loads(value.encode())
-        elif isinstance(value, bytes):
-            value_parsed = orjson.loads(value)
-        else:
-            value_parsed = value
-        return value_parsed
-
     async def _reader(self, input_path: Path, parse_queue: asyncio.Queue):
         """Reads lines from the input file and pushes them to parse_queue."""
         with input_path.open("rb") as f_in:
@@ -41,12 +31,12 @@ class ExtractFieldAsJSONPiece(BasePiece):
             if line is None:  # sentinel
                 break
             try:
-                data = self.parse_value(line)
+                data = orjson.loads(line)
                 value = data[field]
                 # if the field itself is a JSON string, decode it
                 if isinstance(value, (bytes, str)):
                     try:
-                        value_parsed = self.parse_value(value)
+                        value_parsed = orjson.loads(value)
                     except Exception:
                         value_parsed = value  # fallback if not JSON
                 else:

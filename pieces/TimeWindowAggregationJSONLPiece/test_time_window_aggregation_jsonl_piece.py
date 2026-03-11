@@ -10,6 +10,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 @skip_envs('github')
 def test_time_window_aggregation_jsonl_piece():
     input_data = {

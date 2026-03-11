@@ -29,9 +29,10 @@ def test_extract_field_as_json_piece_local():
     print(output)
 
 
+@skip_envs("github")
 def test_extract_field_as_json_piece():
     # Create a temporary directory for input and output
-    with tempfile.TemporaryDirectory() as tmp_dir:
+    with tempfile.TemporaryDirectory(dir='.') as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
         input_file = tmp_dir_path / "test.jsonl"
 
@@ -57,6 +58,7 @@ def test_extract_field_as_json_piece():
         output = piece_dry_run(
             piece_name="ExtractFieldAsJSONPiece",
             input_data=input_data,
+            secrets_data={}
         )
 
         # Print the output partitions/results
