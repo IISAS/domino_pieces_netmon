@@ -44,7 +44,7 @@ def test_sort_jsonl_by_field_piece_local():
 
 def test_sort_jsonl_by_field_piece():
     """Unit test using generated JSONL data."""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(dir=".") as tmpdir:
         tmpdir = Path(tmpdir)
 
         input_file = tmpdir / "input.jsonl"

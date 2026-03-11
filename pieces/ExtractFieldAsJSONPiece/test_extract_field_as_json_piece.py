@@ -31,7 +31,7 @@ def test_extract_field_as_json_piece_local():
 
 def test_extract_field_as_json_piece():
     # Create a temporary directory for input and output
-    with tempfile.TemporaryDirectory() as tmp_dir:
+    with tempfile.TemporaryDirectory(dir=".") as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
         input_file = tmp_dir_path / "test.jsonl"
 
