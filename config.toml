@@ -5,7 +5,7 @@ REGISTRY_NAME = "iisas"
 
 # The name of this Pieces repository
 REPOSITORY_NAME = "domino_pieces_netmon"
-REPOSITORY_LABEL = "Network monitor messages processing"
+REPOSITORY_LABEL = "Network monitor messages processing."
 
 #
 # The version of this Pieces release
