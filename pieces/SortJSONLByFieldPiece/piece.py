@@ -1,118 +1,124 @@
 import asyncio
 import heapq
-import json
 import tempfile
 from pathlib import Path
 from typing import List
 
-import aiofiles
+import orjson
 from domino.base_piece import BasePiece
 
 from .models import InputModel, OutputModel
 
 
 class SortJSONLByFieldPiece(BasePiece):
-    """Async high-throughput sorter for JSONL files by a field with parallel chunk sorting."""
+    """High-throughput sorter for JSONL files by a field."""
 
-    encoding = "utf-8"
-    chunk_size = 100_000  # number of lines per in-memory chunk
-    buffer_size = 1000  # lines per buffered write
-    num_workers = 4  # number of parallel chunk sort tasks
+    chunk_size = 100_000
+    buffer_size = 2000
 
-    async def _chunk_worker(
-        self,
-        sort_field: str,
-        chunk_queue: asyncio.Queue,
-        temp_files: List[Path],
-    ):
-        """Consume chunks from the queue, sort, and write temp files."""
-        while True:
-            chunk = await chunk_queue.get()
-            if chunk is None:  # sentinel
-                break
-            sorted_chunk = sorted(chunk, key=lambda x: x[sort_field])
-            temp_file = Path(tempfile.mkstemp(suffix=".jsonl")[1])
-            async with aiofiles.open(temp_file, "w", encoding=self.encoding) as f:
-                for record in sorted_chunk:
-                    await f.write(json.dumps(record) + "\n")
-            temp_files.append(temp_file)
-            chunk_queue.task_done()
+    async def _sort_chunk(self, chunk: List[dict], sort_field: str) -> Path:
+        """Sort chunk and write to temp file."""
+        chunk.sort(key=lambda x: x[sort_field])
 
-    async def _reader(self, input_path: Path, chunk_queue: asyncio.Queue):
-        """Single async reader that fills chunk queue with lines."""
+        fd, path = tempfile.mkstemp(suffix=".jsonl")
+        temp_path = Path(path)
+
+        with open(fd, "wb") as f:
+            for record in chunk:
+                f.write(orjson.dumps(record))
+                f.write(b"\n")
+
+        return temp_path
+
+    async def _read_chunks(self, input_path: Path):
+        """Yield parsed JSON chunks."""
         chunk: List[dict] = []
-        async with aiofiles.open(input_path, "r", encoding=self.encoding) as f:
-            async for line in f:
-                data = json.loads(line)
-                chunk.append(data)
+
+        with input_path.open("rb") as f:
+            for line in f:
+                chunk.append(orjson.loads(line))
+
                 if len(chunk) >= self.chunk_size:
-                    await chunk_queue.put(chunk.copy())
-                    chunk.clear()
-            if chunk:
-                await chunk_queue.put(chunk.copy())
+                    yield chunk
+                    chunk = []
 
-        # Send sentinel values to stop workers
-        for _ in range(self.num_workers):
-            await chunk_queue.put(None)
+        if chunk:
+            yield chunk
 
-    async def _merge_sorted_chunks(self, temp_files: List[Path], output_path: Path, sort_field: str):
-        """Merge sorted temp files asynchronously using heapq."""
+    def _iter_file(self, path: Path):
+        """Yield parsed JSON objects from a sorted chunk file."""
+        with path.open("rb") as f:
+            for line in f:
+                yield orjson.loads(line)
 
-        def iter_file(file_path: Path):
-            with file_path.open("r", encoding=self.encoding) as f:
-                for line in f:
-                    yield json.loads(line)
+    async def _merge_sorted_chunks(
+        self,
+        temp_files: List[Path],
+        output_path: Path,
+        sort_field: str,
+    ):
+        """Merge sorted chunk files."""
 
-        iterators = [iter_file(f) for f in temp_files]
+        iterators = [self._iter_file(p) for p in temp_files]
 
-        buffer: List[str] = []
-        async with aiofiles.open(output_path, "w", encoding=self.encoding) as f_out:
+        buffer: List[bytes] = []
+
+        with output_path.open("wb") as f_out:
             for record in heapq.merge(*iterators, key=lambda x: x[sort_field]):
-                buffer.append(json.dumps(record))
-                if len(buffer) >= self.buffer_size:
-                    await f_out.write("\n".join(buffer) + "\n")
-                    buffer.clear()
-            if buffer:
-                await f_out.write("\n".join(buffer) + "\n")
+                buffer.append(orjson.dumps(record))
 
-        # Cleanup temp files
+                if len(buffer) >= self.buffer_size:
+                    f_out.write(b"\n".join(buffer))
+                    f_out.write(b"\n")
+                    buffer.clear()
+
+            if buffer:
+                f_out.write(b"\n".join(buffer))
+                f_out.write(b"\n")
+
         for f in temp_files:
             f.unlink(missing_ok=True)
 
+    async def _run(self, input_path: Path, output_path: Path, sort_field: str, workers: int):
+        """Main pipeline."""
+
+        semaphore = asyncio.Semaphore(workers)
+        tasks = []
+
+        async for chunk in self._read_chunks(input_path):
+            async def worker(c=chunk):
+                async with semaphore:
+                    return await self._sort_chunk(c, sort_field)
+
+            tasks.append(asyncio.create_task(worker()))
+
+        temp_files = await asyncio.gather(*tasks)
+
+        await self._merge_sorted_chunks(temp_files, output_path, sort_field)
+
     def piece_function(self, input_data: InputModel):
-        input_file = Path(input_data.input_file)
+
+        input_path = Path(input_data.input_file)
 
         output_file = Path(input_data.output_file)
         if not output_file.is_absolute():
             output_file = Path(self.results_path) / output_file
 
-        temp_files: List[Path] = []
-        self.num_workers = input_data.num_workers
+        output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        async def main():
-            chunk_queue: asyncio.Queue = asyncio.Queue(maxsize=self.num_workers * 2)
-
-            # Start worker tasks
-            workers = [
-                asyncio.create_task(self._chunk_worker(input_data.field, chunk_queue, temp_files))
-                for _ in range(self.num_workers)
-            ]
-
-            # Start single reader
-            reader_task = asyncio.create_task(self._reader(input_file, chunk_queue))
-
-            await reader_task
-            await asyncio.gather(*workers)
-
-            # Merge sorted chunks
-            await self._merge_sorted_chunks(temp_files, output_file, input_data.field)
-
-        asyncio.run(main())
+        asyncio.run(
+            self._run(
+                input_path,
+                output_file,
+                input_data.field,
+                input_data.num_workers,
+            )
+        )
 
         self.logger.info(
-            "Sorting complete: %s by field '%s' using %d workers",
+            "Sorting complete: %s by '%s'",
             str(output_file),
             input_data.field,
-            self.num_workers,
         )
+
         return OutputModel(output_file=str(output_file))
