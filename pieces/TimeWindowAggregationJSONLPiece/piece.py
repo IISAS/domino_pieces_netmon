@@ -89,7 +89,7 @@ class TimeWindowAggregationJSONLPiece(BasePiece):
         aggregation_rules: AggregationRules,
         net_direction: NetDirection,
     ):
-        fields = [k for v in aggregation_rules.dict().values() for k in v.keys()]
+        fields = [k for v in aggregation_rules.model_dump().values() for k in v.keys()]
 
         # add fields required for networking direction resolution
         if net_direction['regex']:

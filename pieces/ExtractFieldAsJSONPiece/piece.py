@@ -1,25 +1,23 @@
 import asyncio
-import json
 from pathlib import Path
 from typing import List
 
-import aiofiles
+import orjson
 from domino.base_piece import BasePiece
 
 from .models import InputModel, OutputModel
 
 
 class ExtractFieldAsJSONPiece(BasePiece):
-    """High-throughput async extraction of a JSON field from JSONL files."""
+    """High-throughput extraction of a JSON field from JSONL files using orjson and binary I/O."""
 
-    encoding = "utf-8"
     buffer_size = 1000  # lines per batch write
     num_workers = 4  # number of concurrent parser tasks
 
     async def _reader(self, input_path: Path, parse_queue: asyncio.Queue):
         """Reads lines from the input file and pushes them to parse_queue."""
-        async with aiofiles.open(input_path, "r", encoding=self.encoding) as f_in:
-            async for line in f_in:
+        with input_path.open("rb") as f_in:
+            for line in f_in:
                 await parse_queue.put(line)
 
         # Send sentinel values to signal parser workers to exit
@@ -33,29 +31,37 @@ class ExtractFieldAsJSONPiece(BasePiece):
             if line is None:  # sentinel
                 break
             try:
-                data = json.loads(line)
+                data = orjson.loads(line)
                 value = data[field]
-                value_json = json.loads(value)
-                await output_queue.put(json.dumps(value_json))
-            except json.JSONDecodeError:
-                self.logger.warning("Invalid JSON line skipped")
+                # if the field itself is a JSON string, decode it
+                if isinstance(value, (bytes, str)):
+                    try:
+                        value_parsed = orjson.loads(value)
+                    except Exception:
+                        value_parsed = value  # fallback if not JSON
+                else:
+                    value_parsed = value
+                await output_queue.put(orjson.dumps(value_parsed, option=orjson.OPT_APPEND_NEWLINE))
             except KeyError:
                 self.logger.warning("Missing field '%s' in line", field)
+            except Exception:
+                self.logger.warning("Invalid JSON line skipped")
 
     async def _writer(self, output_path: Path, output_queue: asyncio.Queue):
-        """Async writer with buffered writes."""
-        buffer: List[str] = []
-        async with aiofiles.open(output_path, "w", encoding=self.encoding) as f_out:
+        """Async writer with buffered binary writes."""
+        buffer: List[bytes] = []
+
+        with output_path.open("wb") as f_out:
             while True:
                 line = await output_queue.get()
                 if line is None:  # sentinel
                     break
                 buffer.append(line)
                 if len(buffer) >= self.buffer_size:
-                    await f_out.write("\n".join(buffer) + "\n")
+                    f_out.write(b"".join(buffer))
                     buffer.clear()
             if buffer:
-                await f_out.write("\n".join(buffer) + "\n")
+                f_out.write(b"".join(buffer))
 
     def piece_function(self, input_data: InputModel):
         input_file = Path(input_data.input_file)
@@ -64,7 +70,7 @@ class ExtractFieldAsJSONPiece(BasePiece):
         if not output_file.is_absolute():
             output_file = Path(self.results_path) / output_file
 
-        field = input_data.field
+        output_file.parent.mkdir(parents=True, exist_ok=True)
 
         self.num_workers = input_data.num_workers
 
@@ -77,7 +83,7 @@ class ExtractFieldAsJSONPiece(BasePiece):
 
             # Start parser workers
             parser_tasks = [
-                asyncio.create_task(self._parser(field, parse_queue, output_queue))
+                asyncio.create_task(self._parser(input_data.field, parse_queue, output_queue))
                 for _ in range(self.num_workers)
             ]
 
