@@ -8,7 +8,7 @@ from domino.base_piece import BasePiece
 from .models import InputModel, OutputModel
 
 
-class PartitionJSONLByField(BasePiece):
+class PartitionJSONLByFieldPiece(BasePiece):
     """High-throughput JSONL partitioner for very large files."""
 
     max_open_files = 256

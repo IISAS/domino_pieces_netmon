@@ -22,7 +22,7 @@ def test_partition_jsonl_by_field_piece_local():
     }
 
     output = piece_dry_run(
-        piece_name="PartitionJSONLByField",
+        piece_name="PartitionJSONLByFieldPiece",
         input_data=input_data,
     )
 
@@ -65,7 +65,7 @@ def test_partition_jsonl_by_field_piece():
 
         # Run the piece dry run
         output = piece_dry_run(
-            piece_name="PartitionJSONLByField",
+            piece_name="PartitionJSONLByFieldPiece",
             input_data=input_data,
         )
 
