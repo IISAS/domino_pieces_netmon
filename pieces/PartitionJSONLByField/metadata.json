@@ -1,5 +1,5 @@
 {
-  "name": "PartitionJSONLByField",
+  "name": "PartitionJSONLByFieldPiece",
   "description": "Partition a JSONL file into multiple JSONL files based on the value of a specified field.",
   "dependency": {
     "dockerfile": "Dockerfile"
