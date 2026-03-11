@@ -16,6 +16,16 @@ class SortJSONLByFieldPiece(BasePiece):
     chunk_size = 100_000
     buffer_size = 2000
 
+    @staticmethod
+    def parse_value(value):
+        if isinstance(value, str):
+            value_parsed = orjson.loads(value.encode())
+        elif isinstance(value, bytes):
+            value_parsed = orjson.loads(value)
+        else:
+            value_parsed = value
+        return value_parsed
+
     async def _sort_chunk(self, chunk: List[dict], sort_field: str) -> Path:
         """Sort chunk and write to temp file."""
         chunk.sort(key=lambda x: x[sort_field])
@@ -36,7 +46,7 @@ class SortJSONLByFieldPiece(BasePiece):
 
         with input_path.open("rb") as f:
             for line in f:
-                chunk.append(orjson.loads(line))
+                chunk.append(self.parse_value(line))
 
                 if len(chunk) >= self.chunk_size:
                     yield chunk
@@ -49,7 +59,7 @@ class SortJSONLByFieldPiece(BasePiece):
         """Yield parsed JSON objects from a sorted chunk file."""
         with path.open("rb") as f:
             for line in f:
-                yield orjson.loads(line)
+                yield self.parse_value(line)
 
     async def _merge_sorted_chunks(
         self,
