@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 @skip_envs('github')
 def test_extract_field_as_json_piece_local():
     input_data = {
-        'input_file': 'dry_run_results/output-split/dns/messages.jsonl',
-        'output_file': 'output-values/dns/messages.jsonl',
+        'input_file': 'dry_run_results/PartitionJSONLByZeekProtocolPiece/dns.jsonl',
         'field': 'value',
         'num_workers': 10
     }
@@ -29,7 +28,7 @@ def test_extract_field_as_json_piece_local():
     print(output)
 
 
-@skip_envs("github")
+@skip_envs("dev")
 def test_extract_field_as_json_piece():
     # Create a temporary directory for input and output
     with tempfile.TemporaryDirectory(dir='.') as tmp_dir:
@@ -44,13 +43,9 @@ def test_extract_field_as_json_piece():
             for msg in test_messages:
                 f.write(json.dumps(msg) + "\n")
 
-        # Prepare output file
-        output_file = tmp_dir_path / "extracted.jsonl"
-
         # Prepare input data for the piece
         input_data = {
             "input_file": str(input_file),
-            "output_file": str(output_file),
             "field": "value"
         }
 
@@ -65,6 +60,7 @@ def test_extract_field_as_json_piece():
         print(output)
 
         # Verify output file exists and content is correct
+        output_file = Path(output['output_file'])
         assert output_file.exists(), "Output file was not created"
         with output_file.open("r", encoding="utf-8") as f:
             lines = f.readlines()

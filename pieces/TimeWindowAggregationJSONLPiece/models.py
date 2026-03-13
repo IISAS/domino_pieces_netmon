@@ -1,78 +1,8 @@
+import json
 from datetime import timedelta
-from typing import Dict, List, Optional, Literal
+from typing import Optional, Dict, Any
 
-from pydantic import BaseModel, Field
-
-
-class ToNumericRule(BaseModel):
-    coerce: List[str] = Field(
-        description="Columns to convert to numeric with coercion."
-    )
-
-
-class FillNaRule(BaseModel):
-    RootModel: Dict[int, List[str]]
-
-
-class AstypeRule(BaseModel):
-    RootModel: Dict[Literal["float", "int", "str"], List[str]]
-
-
-class DatasetCleaningRules(BaseModel):
-    to_numeric: Optional[ToNumericRule] = None
-    fillna: Optional[Dict[int, List[str]]] = None
-    astype: Optional[Dict[Literal["float", "int", "str"], List[str]]] = None
-
-
-AggregationOp = Literal[
-    "count",
-    "nunique",
-    "sum",
-    "mean",
-    "min",
-    "max"
-]
-
-
-class ProtocolAggregation(BaseModel):
-    RootModel: Dict[str, List[AggregationOp]]
-
-
-class AggregationSection(BaseModel):
-    RootModel: Dict[str, ProtocolAggregation]
-
-
-class GroupBySection(BaseModel):
-    RootModel: Dict[str, ProtocolAggregation]
-
-
-class AggregationRules(BaseModel):
-    agg: Dict[str, List[AggregationOp]] = Field(
-        description="Aggregation rules per protocol and field."
-    )
-    groupby: Optional[Dict[str, List[AggregationOp]]] = Field(
-        default=None,
-        description="Optional group-by aggregation rules per protocol."
-    )
-
-
-class NetDirection(BaseModel):
-    regex: Optional[str] = Field(
-        default="",
-        description="Regex matching local networks. Leave empty if not used."
-    )
-    field_name: str = Field(
-        default="mods_dir",
-        description="Name of the field storing computed network direction."
-    )
-    orig_field: str = Field(
-        default="id.orig_h",
-        description="Field containing origin IP address."
-    )
-    resp_field: str = Field(
-        default="id.resp_h",
-        description="Field containing responder IP address."
-    )
+from pydantic import BaseModel, Field, field_validator
 
 
 class InputModel(BaseModel):
@@ -80,62 +10,77 @@ class InputModel(BaseModel):
         ...,
         title="input.file",
         description="Path to a file containing messages to process.",
-    )
-    output_file: str = Field(
-        ...,
-        title="output.file",
-        description="Path to a directory to write the processed messages.",
+        json_schema_extra={
+            "from_upstream": "always",
+        }
     )
     field: str = Field(
         title="field",
+        description="Timestamp field to perform windowing over.",
         default="ts_end",
-        description="Timestamp field to perform windowing over."
+        json_schema_extra={
+            "from_upstream": "never",
+        }
+
     )
     num_workers: int = Field(
         title="num.workers",
+        description="Number of parallel workers",
         default=4,
-        description="Number of parallel workers"
+        json_schema_extra={
+            "from_upstream": "never",
+        }
+
     )
-    data_cleaning_rules: Optional[DatasetCleaningRules] = Field(
-        default={},
+    data_cleaning_rules: Optional[Dict[str, Any]] = Field(
         title="data.cleaning.rules",
         description="Rules for cleaning dataset fields before aggregation.",
+        default={},
+        json_schema_extra={
+            "from_upstream": "never",
+            'widget': "codeeditor-json",
+        }
     )
     aggregation_period: timedelta = Field(
-        default=timedelta(minutes=10),
         title="aggregation.period",
         description="Time window length for aggregation and minimum wait for delayed logs.",
+        default=timedelta(minutes=10),
+        json_schema_extra={
+            "from_upstream": "never",
+        }
     )
-    aggregation_rules: Optional[AggregationRules] = Field(
+    aggregation_rules: Optional[Dict[str, Any]] = Field(
+        title="aggregation.rules",
         default={
             'agg': {
-                'uid': ['count', 'nunique'],
-                'query': ['count', 'nunique'],
-                'proto': ['count', 'nunique']
             },
             'groupby': {
-                'AA': ['count'],
-                'RA': ['count'],
-                'RD': ['count'],
-                'TC': ['count'],
-                'rejected': ['count']
             }
         },
-        title="aggregation.rules",
         description="JSON aggregation rules configuration.",
+        json_schema_extra={
+            "from_upstream": "never",
+            'widget': "codeeditor-json",
+        }
     )
-    net_direction: Optional[NetDirection] = Field(
-        default={
-            # regex matching local networks. set to empty, if not used
-            'regex': r'147\.213\..+',
-            # name of the field containing networking direction according to local networks regex
-            'field': 'mods_dir',
-            'orig_field': 'id.orig_h',
-            'resp_field': 'id.resp_h'
-        },
+
+    net_direction: Optional[Dict[str, Any]] = Field(
         title="net.direction",
+        default={
+        },
         description="Configuration for computing network direction based on local network regex.",
+        json_schema_extra={
+            "from_upstream": "never",
+            'widget': "codeeditor-json",
+        }
     )
+
+    @field_validator("aggregation_rules", "data_cleaning_rules", "net_direction", mode="before")
+    @classmethod
+    def parse_rules(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
 
 class OutputModel(BaseModel):

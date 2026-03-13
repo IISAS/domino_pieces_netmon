@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 import aiofiles
+import isodate
 import pandas as pd
 from domino.base_piece import BasePiece
 from tzlocal import get_localzone
 
-from .models import InputModel, OutputModel, AggregationRules, NetDirection
+from .models import InputModel, OutputModel
 
 
 class FlowDirection(str, Enum):
@@ -66,17 +67,18 @@ class TimeWindowAggregationJSONLPiece(BasePiece):
             return FlowDirection.IN
 
     def add_direction(self, df):
-        if self.net_direction['orig_field'] in df.columns and self.net_direction['resp_field'] in df.columns:
-            self.logger.debug('add_direction call: %s' % df)
-            df[self.net_direction['field']] = df.apply(
-                lambda row: self.get_net_direction(
-                    row[self.net_direction['orig_field']],
-                    row[self.net_direction['resp_field']],
-                    self.net_direction['regex']
-                ),
-                axis=1
-            )
-            self.logger.debug('add_direction result: %s' % df)
+        if 'regex' in self.net_direction and 'orig_field' in self.net_direction and 'resp_field' in self.net_direction:
+            if self.net_direction['orig_field'] in df.columns and self.net_direction['resp_field'] in df.columns:
+                self.logger.debug('add_direction call: %s' % df)
+                df[self.net_direction['field']] = df.apply(
+                    lambda row: self.get_net_direction(
+                        row[self.net_direction['orig_field']],
+                        row[self.net_direction['resp_field']],
+                        self.net_direction['regex']
+                    ),
+                    axis=1
+                )
+                self.logger.debug('add_direction result: %s' % df)
         return df
 
     #
@@ -86,13 +88,13 @@ class TimeWindowAggregationJSONLPiece(BasePiece):
     #
     def resolve_fields(
         self,
-        aggregation_rules: AggregationRules,
-        net_direction: NetDirection,
+        aggregation_rules: dict,
+        net_direction: dict,
     ):
-        fields = [k for v in aggregation_rules.model_dump().values() for k in v.keys()]
+        fields = [k for v in aggregation_rules.values() for k in v.keys()]
 
         # add fields required for networking direction resolution
-        if net_direction['regex']:
+        if 'regex' in net_direction and net_direction['regex']:
             fields.extend([net_direction['orig_field'], self.net_direction['resp_field']])
 
         fields = sorted(fields)
@@ -174,16 +176,16 @@ class TimeWindowAggregationJSONLPiece(BasePiece):
         df = self.clean(df, self.data_cleaning_rules)
 
         # add grouping by networking direction field
-        net_dir_grp = self.net_direction['field'] in df.columns
+        net_dir_grp = self.net_direction['field'] in df.columns if 'field' in self.net_direction else False
 
         # 1-level agg
         df_agg1 = (df.groupby(self.net_direction['field']) if net_dir_grp else df) \
-            .agg(self.aggregation_rules.agg)
+            .agg(self.aggregation_rules['agg'])
         df_agg1 = self.vectorizedf(df_agg1)
 
         # 2-level agg
         df_agg2 = pd.DataFrame()
-        gb_rules = self.aggregation_rules.groupby
+        gb_rules = self.aggregation_rules['groupby']
         for gb, agg in gb_rules.items():
             tmp = df.groupby([self.net_direction['field'], gb] if net_dir_grp else gb).agg({gb: agg}).T
             df_agg2 = pd.concat([df_agg2, tmp])
@@ -299,9 +301,12 @@ class TimeWindowAggregationJSONLPiece(BasePiece):
 
         input_file = Path(input_data.input_file)
 
-        output_file = Path(input_data.output_file)
-        if not output_file.is_absolute():
-            output_file = Path(self.results_path) / output_file
+        output_file = Path(self.results_path)
+        if self.__class__.__name__ == "DryPiece":
+            output_file = output_file / "TimeWindowAggregationJSONLPiece"
+        td = isodate.duration_isoformat(input_data.aggregation_period)
+        output_file = output_file / f"{td}.jsonl"
+        output_file.parent.mkdir(parents=True, exist_ok=True)
 
         field = input_data.field
         self.num_workers = input_data.num_workers

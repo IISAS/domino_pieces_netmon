@@ -6,21 +6,27 @@ class InputModel(BaseModel):
         ...,
         title="Input JSONL File",
         description="Path to the input JSONL file containing messages to process.",
-    )
-    output_file: str = Field(
-        ...,
-        title="Output JSONL File",
-        description="Path to the output JSONL file.",
+        json_schema_extra={
+            "from_upstream": "always",
+        }
     )
     field: str = Field(
         ...,
         title="Field Name",
         description="Name of the field in each JSON message that contains JSON to extract.",
+        json_schema_extra={
+            "from_upstream": "never",
+        }
+
     )
     num_workers: int = Field(
         title="Number of Workers",
         description="Number of workers to use.",
         default=4,
+        json_schema_extra={
+            "from_upstream": "never",
+        }
+
     )
 
 

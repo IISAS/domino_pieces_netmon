@@ -14,8 +14,7 @@ logger = logging.getLogger(__name__)
 @skip_envs('github')
 def test_time_window_aggregation_jsonl_piece():
     input_data = {
-        'input_file': 'dry_run_results/output-sort/dns/messages.jsonl',
-        'output_file': 'output-agg/dns/PT10M.jsonl',
+        'input_file': 'dry_run_results/SortJSONLByFieldPiece/value.jsonl',
         'aggregation_period': 'PT10M',
         'aggregation_rules': {
             'agg': {
@@ -30,6 +29,14 @@ def test_time_window_aggregation_jsonl_piece():
                 'TC': ['count'],
                 'rejected': ['count']
             }
+        },
+        'net_direction': {
+            # regex matching local networks. set to empty, if not used
+            'regex': r'147\.213\..+',
+            # name of the field containing networking direction according to local networks regex
+            'field': 'mods_dir',
+            'orig_field': 'id.orig_h',
+            'resp_field': 'id.resp_h'
         }
     }
 

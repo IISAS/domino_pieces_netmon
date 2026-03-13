@@ -110,9 +110,10 @@ class SortJSONLByFieldPiece(BasePiece):
 
         input_path = Path(input_data.input_file)
 
-        output_file = Path(input_data.output_file)
-        if not output_file.is_absolute():
-            output_file = Path(self.results_path) / output_file
+        output_file = Path(self.results_path)
+        if self.__class__.__name__ == "DryPiece":
+            output_file = output_file / "SortJSONLByFieldPiece"
+        output_file = output_file / input_path.name
 
         output_file.parent.mkdir(parents=True, exist_ok=True)
 

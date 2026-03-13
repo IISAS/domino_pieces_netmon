@@ -66,10 +66,10 @@ class ExtractFieldAsJSONPiece(BasePiece):
     def piece_function(self, input_data: InputModel):
         input_file = Path(input_data.input_file)
 
-        output_file = Path(input_data.output_file)
-        if not output_file.is_absolute():
-            output_file = Path(self.results_path) / output_file
-
+        output_file = Path(self.results_path)
+        if self.__class__.__name__ == "DryPiece":
+            output_file = output_file / "ExtractFieldAsJSONPiece"
+        output_file = output_file / f"{input_data.field}.jsonl"
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
         self.num_workers = input_data.num_workers

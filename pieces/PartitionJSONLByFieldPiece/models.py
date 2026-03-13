@@ -9,15 +9,13 @@ class InputModel(BaseModel):
         title="Input JSONL File",
         description="Path to the input JSONL file that will be partitioned.",
     )
-    output_dir: str = Field(
-        ...,
-        title="Output Directory",
-        description="Directory where partitioned JSONL files will be saved.",
-    )
     field: str = Field(
         ...,
         title="Partition Field",
         description="Name of the field in each JSON object used to partition the JSONL file.",
+        json_schema_extra={
+            "from_upstream": "never",
+        }
     )
 
 

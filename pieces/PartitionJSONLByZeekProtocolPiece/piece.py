@@ -1,16 +1,19 @@
+import os
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, BinaryIO, List
 
+import domino.base_piece
 import orjson
 from domino.base_piece import BasePiece
 
 from .models import InputModel, OutputModel
 
 
-class PartitionJSONLByFieldPiece(BasePiece):
+class PartitionJSONLByZeekProtocolPiece(BasePiece):
     """High-throughput JSONL partitioner for very large files."""
 
+    field = "key"
     max_open_files = 256
     buffer_size = 4096  # number of lines per write
 
@@ -19,19 +22,22 @@ class PartitionJSONLByFieldPiece(BasePiece):
         input_path = Path(input_data.input_file)
 
         output_dir = Path(self.results_path)
-        output_dir.mkdir(parents=True, exist_ok=True)
         if self.__class__.__name__ == "DryPiece":
-            output_dir = output_dir / "PartitionJSONLByFieldPiece"
-
+            output_dir = output_dir / "PartitionJSONLByZeekProtocolPiece"
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         partitions: Dict[str, str] = {}
+        for p in OutputModel.protocols:
+            file_path = output_dir / f"{p}.jsonl"
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text("")
+            partitions.setdefault(p, file_path)
+
         open_files: "OrderedDict[str, BinaryIO]" = OrderedDict()
         buffers: Dict[str, List[bytes]] = {}
 
         num_lines = 0
         num_invalid = 0
-
-        field = input_data.field
 
         def get_file(key: str) -> BinaryIO:
             """LRU cached file handles."""
@@ -39,12 +45,10 @@ class PartitionJSONLByFieldPiece(BasePiece):
                 open_files.move_to_end(key)
                 return open_files[key]
 
-            filepath = output_dir / f"{key}.jsonl"
-            filepath.parent.mkdir(parents=True, exist_ok=True)
+            filepath = partitions[key]
 
             fp = open(filepath, "ab", buffering=1024 * 1024)
             open_files[key] = fp
-            partitions.setdefault(key, str(filepath))
             buffers.setdefault(key, [])
 
             # Evict old file if too many open
@@ -62,9 +66,12 @@ class PartitionJSONLByFieldPiece(BasePiece):
                 num_lines += 1
                 try:
                     data = orjson.loads(line)
-                    key = str(data[field])
+                    key = str(data[self.field])
                 except Exception:
                     num_invalid += 1
+                    continue
+
+                if key not in OutputModel.protocols:
                     continue
 
                 fp = get_file(key)
@@ -89,4 +96,13 @@ class PartitionJSONLByFieldPiece(BasePiece):
         if num_invalid:
             self.logger.warning("Total invalid lines: %d", num_invalid)
 
-        return OutputModel(partitions=partitions)
+        return OutputModel(
+            conn=str(partitions['conn']),
+            dns=str(partitions['dns']),
+            ftp=str(partitions['ftp']),
+            sip=str(partitions['sip']),
+            smtp=str(partitions['smtp']),
+            ssh=str(partitions['ssh']),
+            ssl=str(partitions['ssl']),
+            http=str(partitions['http']),
+        )
