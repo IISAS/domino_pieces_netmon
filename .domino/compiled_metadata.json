@@ -37,29 +37,26 @@
             "properties": {
                 "input_file": {
                     "description": "Path to the input JSONL file containing messages to process.",
+                    "from_upstream": "always",
                     "title": "Input JSONL File",
-                    "type": "string"
-                },
-                "output_file": {
-                    "description": "Path to the output JSONL file.",
-                    "title": "Output JSONL File",
                     "type": "string"
                 },
                 "field": {
                     "description": "Name of the field in each JSON message that contains JSON to extract.",
+                    "from_upstream": "never",
                     "title": "Field Name",
                     "type": "string"
                 },
                 "num_workers": {
                     "default": 4,
                     "description": "Number of workers to use.",
+                    "from_upstream": "never",
                     "title": "Number of Workers",
                     "type": "integer"
                 }
             },
             "required": [
                 "input_file",
-                "output_file",
                 "field"
             ],
             "title": "InputModel",
@@ -115,204 +112,32 @@
             }
         },
         "input_schema": {
-            "$defs": {
-                "AggregationRules": {
-                    "properties": {
-                        "agg": {
-                            "additionalProperties": {
-                                "items": {
-                                    "enum": [
-                                        "count",
-                                        "nunique",
-                                        "sum",
-                                        "mean",
-                                        "min",
-                                        "max"
-                                    ],
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "description": "Aggregation rules per protocol and field.",
-                            "title": "Agg",
-                            "type": "object"
-                        },
-                        "groupby": {
-                            "anyOf": [
-                                {
-                                    "additionalProperties": {
-                                        "items": {
-                                            "enum": [
-                                                "count",
-                                                "nunique",
-                                                "sum",
-                                                "mean",
-                                                "min",
-                                                "max"
-                                            ],
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "type": "object"
-                                },
-                                {
-                                    "type": "null"
-                                }
-                            ],
-                            "default": null,
-                            "description": "Optional group-by aggregation rules per protocol.",
-                            "title": "Groupby"
-                        }
-                    },
-                    "required": [
-                        "agg"
-                    ],
-                    "title": "AggregationRules",
-                    "type": "object"
-                },
-                "DatasetCleaningRules": {
-                    "properties": {
-                        "to_numeric": {
-                            "anyOf": [
-                                {
-                                    "$ref": "#/$defs/ToNumericRule"
-                                },
-                                {
-                                    "type": "null"
-                                }
-                            ],
-                            "default": null
-                        },
-                        "fillna": {
-                            "anyOf": [
-                                {
-                                    "additionalProperties": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "type": "object"
-                                },
-                                {
-                                    "type": "null"
-                                }
-                            ],
-                            "default": null,
-                            "title": "Fillna"
-                        },
-                        "astype": {
-                            "anyOf": [
-                                {
-                                    "additionalProperties": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "propertyNames": {
-                                        "enum": [
-                                            "float",
-                                            "int",
-                                            "str"
-                                        ]
-                                    },
-                                    "type": "object"
-                                },
-                                {
-                                    "type": "null"
-                                }
-                            ],
-                            "default": null,
-                            "title": "Astype"
-                        }
-                    },
-                    "title": "DatasetCleaningRules",
-                    "type": "object"
-                },
-                "NetDirection": {
-                    "properties": {
-                        "regex": {
-                            "anyOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "null"
-                                }
-                            ],
-                            "default": "",
-                            "description": "Regex matching local networks. Leave empty if not used.",
-                            "title": "Regex"
-                        },
-                        "field_name": {
-                            "default": "mods_dir",
-                            "description": "Name of the field storing computed network direction.",
-                            "title": "Field Name",
-                            "type": "string"
-                        },
-                        "orig_field": {
-                            "default": "id.orig_h",
-                            "description": "Field containing origin IP address.",
-                            "title": "Orig Field",
-                            "type": "string"
-                        },
-                        "resp_field": {
-                            "default": "id.resp_h",
-                            "description": "Field containing responder IP address.",
-                            "title": "Resp Field",
-                            "type": "string"
-                        }
-                    },
-                    "title": "NetDirection",
-                    "type": "object"
-                },
-                "ToNumericRule": {
-                    "properties": {
-                        "coerce": {
-                            "description": "Columns to convert to numeric with coercion.",
-                            "items": {
-                                "type": "string"
-                            },
-                            "title": "Coerce",
-                            "type": "array"
-                        }
-                    },
-                    "required": [
-                        "coerce"
-                    ],
-                    "title": "ToNumericRule",
-                    "type": "object"
-                }
-            },
             "properties": {
                 "input_file": {
                     "description": "Path to a file containing messages to process.",
+                    "from_upstream": "always",
                     "title": "input.file",
-                    "type": "string"
-                },
-                "output_file": {
-                    "description": "Path to a directory to write the processed messages.",
-                    "title": "output.file",
                     "type": "string"
                 },
                 "field": {
                     "default": "ts_end",
                     "description": "Timestamp field to perform windowing over.",
+                    "from_upstream": "never",
                     "title": "field",
                     "type": "string"
                 },
                 "num_workers": {
                     "default": 4,
                     "description": "Number of parallel workers",
+                    "from_upstream": "never",
                     "title": "num.workers",
                     "type": "integer"
                 },
                 "data_cleaning_rules": {
                     "anyOf": [
                         {
-                            "$ref": "#/$defs/DatasetCleaningRules"
+                            "additionalProperties": true,
+                            "type": "object"
                         },
                         {
                             "type": "null"
@@ -320,82 +145,56 @@
                     ],
                     "default": {},
                     "description": "Rules for cleaning dataset fields before aggregation.",
-                    "title": "data.cleaning.rules"
+                    "from_upstream": "never",
+                    "title": "data.cleaning.rules",
+                    "widget": "codeeditor-json"
                 },
                 "aggregation_period": {
                     "default": "PT10M",
                     "description": "Time window length for aggregation and minimum wait for delayed logs.",
                     "format": "duration",
+                    "from_upstream": "never",
                     "title": "aggregation.period",
                     "type": "string"
                 },
                 "aggregation_rules": {
                     "anyOf": [
                         {
-                            "$ref": "#/$defs/AggregationRules"
+                            "additionalProperties": true,
+                            "type": "object"
                         },
                         {
                             "type": "null"
                         }
                     ],
                     "default": {
-                        "agg": {
-                            "proto": [
-                                "count",
-                                "nunique"
-                            ],
-                            "query": [
-                                "count",
-                                "nunique"
-                            ],
-                            "uid": [
-                                "count",
-                                "nunique"
-                            ]
-                        },
-                        "groupby": {
-                            "AA": [
-                                "count"
-                            ],
-                            "RA": [
-                                "count"
-                            ],
-                            "RD": [
-                                "count"
-                            ],
-                            "TC": [
-                                "count"
-                            ],
-                            "rejected": [
-                                "count"
-                            ]
-                        }
+                        "agg": {},
+                        "groupby": {}
                     },
                     "description": "JSON aggregation rules configuration.",
-                    "title": "aggregation.rules"
+                    "from_upstream": "never",
+                    "title": "aggregation.rules",
+                    "widget": "codeeditor-json"
                 },
                 "net_direction": {
                     "anyOf": [
                         {
-                            "$ref": "#/$defs/NetDirection"
+                            "additionalProperties": true,
+                            "type": "object"
                         },
                         {
                             "type": "null"
                         }
                     ],
-                    "default": {
-                        "regex": "147\\.213\\..+",
-                        "field": "mods_dir",
-                        "orig_field": "id.orig_h",
-                        "resp_field": "id.resp_h"
-                    },
+                    "default": {},
                     "description": "Configuration for computing network direction based on local network regex.",
-                    "title": "net.direction"
+                    "from_upstream": "never",
+                    "title": "net.direction",
+                    "widget": "codeeditor-json"
                 }
             },
             "required": [
-                "input_file",
-                "output_file"
+                "input_file"
             ],
             "title": "InputModel",
             "type": "object"
@@ -460,20 +259,15 @@
                     "title": "Input JSONL File",
                     "type": "string"
                 },
-                "output_dir": {
-                    "description": "Directory where partitioned JSONL files will be saved.",
-                    "title": "Output Directory",
-                    "type": "string"
-                },
                 "field": {
                     "description": "Name of the field in each JSON object used to partition the JSONL file.",
+                    "from_upstream": "never",
                     "title": "Partition Field",
                     "type": "string"
                 }
             },
             "required": [
                 "input_file",
-                "output_dir",
                 "field"
             ],
             "title": "InputModel",
@@ -498,6 +292,172 @@
         },
         "secrets_schema": null,
         "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/PartitionJSONLByFieldPiece"
+    },
+    "PartitionJSONLByZeekProtocolPiece": {
+        "name": "PartitionJSONLByZeekProtocolPiece",
+        "dependency": {
+            "dockerfile": "Dockerfile",
+            "requirements_file": null
+        },
+        "tags": [
+            "JSONL",
+            "data-processing",
+            "partition",
+            "split",
+            "Zeek",
+            "Kafka"
+        ],
+        "style": {
+            "node_label": "Partition By Zeek Protocol",
+            "node_type": "default",
+            "node_style": {
+                "backgroundColor": "#ebebeb"
+            },
+            "useIcon": true,
+            "icon_class_name": "fa7-solid:split",
+            "iconStyle": {
+                "cursor": "pointer"
+            }
+        },
+        "description": "Partition a JSONL file into multiple JSONL files based on the protocol value specified in the 'key' attribute of the Kafka message.",
+        "container_resources": {
+            "requests": {
+                "cpu": 100,
+                "memory": 128
+            },
+            "limits": {
+                "cpu": 500,
+                "memory": 512
+            }
+        },
+        "input_schema": {
+            "properties": {
+                "input_file": {
+                    "description": "Path to the input JSONL file that will be partitioned.",
+                    "title": "Input JSONL File",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "input_file"
+            ],
+            "title": "InputModel",
+            "type": "object"
+        },
+        "output_schema": {
+            "properties": {
+                "conn": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Records network connection activity observed by Zeek, capturing metadata about communications between originators and responders across both stateful (e.g., TCP) and stateless (e.g., UDP) protocols.",
+                    "title": "conn.log"
+                },
+                "dns": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Captures Domain Name System queries and responses used for hostname resolution.",
+                    "title": "dns.log"
+                },
+                "ftp": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Logs File Transfer Protocol sessions including commands and file transfers.",
+                    "title": "ftp.log"
+                },
+                "sip": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Captures Session Initiation Protocol signaling used in VoIP communications.",
+                    "title": "sip.log"
+                },
+                "smtp": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Records Simple Mail Transfer Protocol transactions related to email delivery.",
+                    "title": "smtp.log"
+                },
+                "ssh": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Captures Secure Shell connection metadata including authentication attempts and encryption parameters.",
+                    "title": "ssh.log"
+                },
+                "ssl": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Records TLS/SSL handshake metadata and certificate details from encrypted connections.",
+                    "title": "ssl.log"
+                },
+                "http": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Logs HTTP requests and responses exchanged between clients and web servers.",
+                    "title": "http.log"
+                }
+            },
+            "required": [
+                "conn",
+                "dns",
+                "ftp",
+                "sip",
+                "smtp",
+                "ssh",
+                "ssl",
+                "http"
+            ],
+            "title": "OutputModel",
+            "type": "object"
+        },
+        "secrets_schema": null,
+        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/PartitionJSONLByZeekProtocolPiece"
     },
     "ExtractFieldAsJSONPiece": {
         "name": "ExtractFieldAsJSONPiece",
@@ -537,29 +497,26 @@
             "properties": {
                 "input_file": {
                     "description": "Path to the input JSONL file containing messages to process.",
+                    "from_upstream": "always",
                     "title": "Input JSONL File",
-                    "type": "string"
-                },
-                "output_file": {
-                    "description": "Path where the extracted JSON messages will be written.",
-                    "title": "Output JSONL File",
                     "type": "string"
                 },
                 "field": {
                     "description": "Name of the field in each JSON message that contains JSON to extract.",
+                    "from_upstream": "never",
                     "title": "Field Name",
                     "type": "string"
                 },
                 "num_workers": {
                     "default": 4,
                     "description": "Number of workers to use.",
+                    "from_upstream": "never",
                     "title": "Number of Workers",
                     "type": "integer"
                 }
             },
             "required": [
                 "input_file",
-                "output_file",
                 "field"
             ],
             "title": "InputModel",
