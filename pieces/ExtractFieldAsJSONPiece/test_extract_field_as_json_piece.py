@@ -28,7 +28,7 @@ def test_extract_field_as_json_piece_local():
     print(output)
 
 
-@skip_envs("dev")
+@skip_envs("github", "dev")
 def test_extract_field_as_json_piece():
     # Create a temporary directory for input and output
     with tempfile.TemporaryDirectory(dir='.') as tmp_dir:

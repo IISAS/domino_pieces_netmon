@@ -41,7 +41,7 @@ def test_sort_jsonl_by_field_piece_local():
     print(output)
 
 
-@skip_envs("dev")
+@skip_envs("github", "dev")
 def test_sort_jsonl_by_field_piece():
     """Unit test using generated JSONL data."""
     with tempfile.TemporaryDirectory() as tmpdir:
