@@ -417,6 +417,88 @@
         "secrets_schema": null,
         "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/TimeWindowAggregationJSONLPiece"
     },
+    "PartitionJSONLByFieldPiece": {
+        "name": "PartitionJSONLByFieldPiece",
+        "dependency": {
+            "dockerfile": "Dockerfile",
+            "requirements_file": null
+        },
+        "tags": [
+            "JSONL",
+            "data-processing",
+            "partition",
+            "split",
+            "file-management"
+        ],
+        "style": {
+            "node_label": "Partition JSONL",
+            "node_type": "default",
+            "node_style": {
+                "backgroundColor": "#ebebeb"
+            },
+            "useIcon": true,
+            "icon_class_name": "fa7-solid:split",
+            "iconStyle": {
+                "cursor": "pointer"
+            }
+        },
+        "description": "Partition a JSONL file into multiple JSONL files based on the value of a specified field.",
+        "container_resources": {
+            "requests": {
+                "cpu": 100,
+                "memory": 128
+            },
+            "limits": {
+                "cpu": 500,
+                "memory": 512
+            }
+        },
+        "input_schema": {
+            "properties": {
+                "input_file": {
+                    "description": "Path to the input JSONL file that will be partitioned.",
+                    "title": "Input JSONL File",
+                    "type": "string"
+                },
+                "output_dir": {
+                    "description": "Directory where partitioned JSONL files will be saved.",
+                    "title": "Output Directory",
+                    "type": "string"
+                },
+                "field": {
+                    "description": "Name of the field in each JSON object used to partition the JSONL file.",
+                    "title": "Partition Field",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "input_file",
+                "output_dir",
+                "field"
+            ],
+            "title": "InputModel",
+            "type": "object"
+        },
+        "output_schema": {
+            "properties": {
+                "partitions": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Mapping of partition names to their corresponding JSONL file paths.",
+                    "title": "Partitions Mapping",
+                    "type": "object"
+                }
+            },
+            "required": [
+                "partitions"
+            ],
+            "title": "OutputModel",
+            "type": "object"
+        },
+        "secrets_schema": null,
+        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/PartitionJSONLByFieldPiece"
+    },
     "ExtractFieldAsJSONPiece": {
         "name": "ExtractFieldAsJSONPiece",
         "dependency": {
