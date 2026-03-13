@@ -1,9 +1,7 @@
-import os
 from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, BinaryIO, List
 
-import domino.base_piece
 import orjson
 from domino.base_piece import BasePiece
 

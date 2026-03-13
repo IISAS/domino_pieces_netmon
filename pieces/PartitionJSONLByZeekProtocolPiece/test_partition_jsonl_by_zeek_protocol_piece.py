@@ -6,7 +6,7 @@ from pathlib import Path
 from domino.testing import piece_dry_run
 from domino.testing.utils import skip_envs
 
-from pieces.PartitionJSONLByZeekProtocolPiece.models import OutputModel
+from .models import OutputModel
 
 logging.basicConfig(
     level=logging.INFO,
