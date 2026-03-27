@@ -1,0 +1,25 @@
+{
+    "name": "TimeWindowAggregationPiece",
+    "description": "Rule-based batch processing of network monitor messages.",
+    "dependency": {
+        "dockerfile": "Dockerfile"
+    },
+    "container_resources": {
+        "requests": {
+            "cpu": 100,
+            "memory": 128
+        },
+        "limits": {
+            "cpu": 500,
+            "memory": 512
+        }
+    },
+    "tags": [
+        "TimeWindow",
+        "aggregation"
+    ],
+    "style": {
+        "node_label": "Time Window Aggregation",
+        "icon_class_name": "fa7-solid:gears"
+    }
+}

@@ -1,8 +1,8 @@
 {
-    "name": "TimeWindowAggregationJSONLPiece",
+    "name": "TrainModelPiece",
     "description": "Rule-based batch processing of network monitor messages.",
     "dependency": {
-        "dockerfile": "Dockerfile"
+        "dockerfile": "Dockerfile-tensorflow-gpu"
     },
     "container_resources": {
         "requests": {
