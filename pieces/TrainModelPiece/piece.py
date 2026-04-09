@@ -32,6 +32,7 @@ class TrainModelPiece(BasePiece):
         teacher_forcing: bool,
         loss_function: keras.losses.Loss,
         metrics: List[keras.metrics.Metric],
+        learning_rate: float = 0.001,
     ) -> keras.Model:
 
         if teacher_forcing:
@@ -56,7 +57,7 @@ class TrainModelPiece(BasePiece):
         )
 
         # compile model
-        opt = keras.optimizers.Adam(learning_rate=0.001, clipnorm=1.0)
+        opt = keras.optimizers.Adam(learning_rate=learning_rate, clipnorm=1.0)
         model.compile(
             loss=loss_function,
             optimizer=opt,
@@ -93,8 +94,8 @@ class TrainModelPiece(BasePiece):
         # ensure the results path dir exists
         self.get_results_path().mkdir(parents=True, exist_ok=True)
 
-        last_model_file_path = self.get_results_path() / "model_last.h5"
-        best_model_file_path = self.get_results_path() / "model_best.h5"
+        last_model_file_path = self.get_results_path() / "model_last.keras"
+        best_model_file_path = self.get_results_path() / "model_best.keras"
 
         # load data
         df = self.load_data(Path(input_data.input_file), input_data.X, input_data.Y)
@@ -112,7 +113,14 @@ class TrainModelPiece(BasePiece):
             time_step_unit=datetime.timedelta(minutes=15)  # step size of data
         )
 
-        pipeline.fit(df)
+        best_model_checkpoint = keras.callbacks.ModelCheckpoint(
+            filepath=str(best_model_file_path),
+            monitor='loss',
+            save_best_only=True,
+            verbose=0,
+        )
+
+        pipeline.fit(df, callbacks=[best_model_checkpoint])
 
         history = pipeline.history
         model = pipeline.model_
@@ -155,7 +163,7 @@ class TrainModelPiece(BasePiece):
 
         self.logger.info('Training report created.')
 
-        return OutputModel(model_file=str(last_model_file_path))
+        return OutputModel(model_file=str(best_model_file_path))
 
 
 if __name__ == '__main__':

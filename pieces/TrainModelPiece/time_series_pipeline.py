@@ -31,7 +31,6 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         stl_period=None,
         tsg_sampling_rate=1,
         tsg_stride=1,
-        tsg_batch_size=1,
         time_step_unit=default_time_step_unit,
         random_state: int = None,
     ):
@@ -146,16 +145,7 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         y = X[self.forecast_steps:, :y_dim]
         X = X[:-self.forecast_steps, :]
 
-        # # Sequence slicing
-        # X, y = self._make_sequences(
-        #     X=X,
-        #     y=X,
-        #     seq_len_in=self.seq_len_in,
-        #     seq_len_out=self.seq_len_out
-        # )
-        #
-        # y = y.reshape(y.shape[0], np.multiply(*y.shape[1:]))
-
+        # Time-series generator
         tsg = keras.preprocessing.sequence.TimeseriesGenerator(
             X, y,
             **{
@@ -196,7 +186,7 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         return model
 
     # --- fit ---
-    def fit(self, X: np.ndarray):
+    def fit(self, X: np.ndarray, callbacks: list = None):
 
         if self.random_state is not None:
             np.random.seed(self.random_state)
@@ -220,7 +210,8 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         self.history = self.model_.fit(
             tsg,
             epochs=self.epochs,
-            verbose=1
+            verbose=1,
+            callbacks=callbacks,
         )
 
         return self
