@@ -26,13 +26,11 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         stl_remove_peak=False,
         stl_test=False,
         stl_period=None,
-        tsg_sampling_rate=1,
-        tsg_stride=1,
         random_state: int = None,
     ):
         self.seq_len_in = seq_len_in
-        self.forecast_steps = forecast_steps
         self.seq_len_out = seq_len_out
+        self.forecast_steps = forecast_steps
         self.roll_windows = roll_windows
         self.gru_units = gru_units
         self.dropout_rate = dropout_rate
@@ -49,11 +47,13 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         self.stl_isfitted = False
         # TSG
         self.tsg_length = self.seq_len_in
-        self.tsg_sampling_rate = tsg_sampling_rate
-        self.tsg_stride = tsg_stride
+
         # model
         self.loss = keras.losses.MeanSquaredError()
-        self.metrics = [self.loss, keras.metrics.MeanAbsoluteError()]
+        self.metrics = [
+            self.loss,
+            keras.metrics.MeanAbsoluteError()
+        ]
 
         self.random_state = random_state
 
@@ -143,8 +143,8 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
             X, y,
             **{
                 "length": self.seq_len_in,
-                "sampling_rate": self.tsg_sampling_rate,
-                "stride": self.tsg_stride,
+                "sampling_rate": 1,
+                "stride": 1,
                 "batch_size": self.batch_size
             },
         )

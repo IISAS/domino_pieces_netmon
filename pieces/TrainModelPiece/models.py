@@ -45,11 +45,6 @@ class InputModel(BaseModel):
         description="The dropout rate for the model.",
         default=0.6,
     )
-    klag_steps: int = Field(
-        title="klag.steps",
-        description="The number of timesteps to compute diff. 0 - no diff is computed.",
-        default=1,
-    )
     batch_size: int = Field(
         title="batch.size",
         description="The batch size for training the model.",
@@ -65,16 +60,7 @@ class InputModel(BaseModel):
         description="The number of epochs to wait before stopping training.",
         default=10,
     )
-    tsg_sampling_rate: int = Field(
-        title="tsg.sampling_rate",
-        description="Period between successive individual timesteps within sequences. For rate r, timesteps data[i], data[i-r], ... data[i - length] are used for create a sample sequence.",
-        default=1,
-    )
-    tsg_stride: int = Field(
-        title="tsg.stride",
-        description="Period between successive output sequences. For stride s, consecutive output samples would be centered around data[i], data[i+s], data[i+2*s], etc.",
-        default=1,
-    )
+
     X: List[str] = Field(
         title="Feature Columns (X)",
         description="List of column names to be used as input features for the model training (independent variables).",
