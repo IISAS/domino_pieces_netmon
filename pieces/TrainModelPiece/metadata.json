@@ -2,7 +2,7 @@
     "name": "TrainModelPiece",
     "description": "Trains a GRU-based time series model on network monitoring data.",
     "dependency": {
-        "dockerfile": "Dockerfile-tensorflow-gpu"
+        "dockerfile": "Dockerfile.tensorflow-gpu"
     },
     "container_resources": {
         "requests": {

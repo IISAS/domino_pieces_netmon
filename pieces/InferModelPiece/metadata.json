@@ -2,7 +2,7 @@
     "name": "InferModelPiece",
     "description": "Runs inference on network monitoring data using a GRU model trained by TrainModelPiece.",
     "dependency": {
-        "dockerfile": "Dockerfile-tensorflow-gpu"
+        "dockerfile": "Dockerfile.tensorflow-gpu"
     },
     "container_resources": {
         "requests": {
