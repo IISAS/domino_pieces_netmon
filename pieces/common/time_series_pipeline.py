@@ -1,5 +1,4 @@
 import numpy as np
-from keras.preprocessing.sequence import TimeseriesGenerator
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler
@@ -45,9 +44,6 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         self.stl_test = stl_test
         self.stl_period = self.seq_len_in if stl_period is None else stl_period
         self.stl_isfitted = False
-        # TSG
-        self.tsg_length = self.seq_len_in
-
         # model
         self.loss = keras.losses.MeanSquaredError()
         self.metrics = [
@@ -103,19 +99,7 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
 
         return np.hstack(feats)
 
-    # Sequence slicing
-    def _make_sequences(self, X: np.ndarray, y: np.ndarray, seq_len_in, seq_len_out) -> tuple[np.ndarray, np.ndarray]:
-        n_samples, n_features = X.shape
-        sequences = []
-        targets = []
-
-        for i in range(n_samples - seq_len_in - seq_len_out + 1):
-            sequences.append(X[i:i + seq_len_in])
-            targets.append(y[i + seq_len_in:i + seq_len_in + seq_len_out])
-
-        return np.array(sequences), np.array(targets)
-
-    def _transform(self, X: np.ndarray) -> TimeseriesGenerator:
+    def _transform(self, X: np.ndarray):
         """Feature engineering / scaling applied to X before fit and predict."""
 
         y_dim = X.shape[1]
@@ -208,21 +192,3 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         )
 
         return self
-
-    # --- predict ---
-    def predict(self, H):
-        X_last_features = self.X_features_[-self.seq_len_in:]
-        X_seq = X_last_features[None, :, :]
-        pred_steps = []
-        while len(pred_steps) < H:
-            y_hat_flat = self.model_.predict(X_seq, verbose=0)
-            y_hat = y_hat_flat.reshape(1, self.seq_len_out, self.n_output_vars_)
-            pred_steps.append(y_hat)
-            X_seq = np.concatenate([X_seq[:, self.seq_len_out:, :], y_hat], axis=1)
-            if X_seq.shape[1] > self.seq_len_in:
-                X_seq = X_seq[:, -self.seq_len_in:, :]
-        y_pred_increments = np.concatenate(pred_steps, axis=1)[:, :H, :]
-        # Reconstruct absolute values
-        last_x = self.X_raw_[-1, :]
-        y_pred_abs = np.cumsum(np.vstack([last_x, y_pred_increments[0]]), axis=0)[1:]
-        return y_pred_abs
