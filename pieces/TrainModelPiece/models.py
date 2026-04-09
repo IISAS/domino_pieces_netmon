@@ -15,9 +15,9 @@ class InputModel(BaseModel):
         description="The proportion of training data to be used for training the model.",
         default=0.7
     )
-    differential: bool = Field(
-        title="differential",
-        description="Whether or not to train a differential model.",
+    diff: bool = Field(
+        title="differencing",
+        description="Apply first-order differencing to the input sequence before training. Each value is replaced by its difference from the previous timestep: [x₁, x₂, ..., xₙ] → [x₂−x₁, x₃−x₂, ..., xₙ−xₙ₋₁].",
         default=False,
     )
     seq_len_in: int = Field(
