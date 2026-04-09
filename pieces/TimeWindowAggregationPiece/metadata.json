@@ -1,5 +1,5 @@
 {
-    "name": "TimeWindowAggregationJSONLPiece",
+    "name": "TimeWindowAggregationPiece",
     "description": "Rule-based batch processing of network monitor messages.",
     "dependency": {
         "dockerfile": "Dockerfile"
@@ -15,7 +15,6 @@
         }
     },
     "tags": [
-        "JSONL",
         "TimeWindow",
         "aggregation"
     ],

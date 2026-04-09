@@ -1,0 +1,26 @@
+{
+    "name": "TrainModelPiece",
+    "description": "Trains a GRU-based time series model on network monitoring data.",
+    "dependency": {
+        "dockerfile": "Dockerfile.tensorflow-gpu"
+    },
+    "container_resources": {
+        "requests": {
+            "cpu": 100,
+            "memory": 128
+        },
+        "limits": {
+            "cpu": 500,
+            "memory": 512
+        }
+    },
+    "tags": [
+        "JSONL",
+        "TimeWindow",
+        "aggregation"
+    ],
+    "style": {
+        "node_label": "Train Model",
+        "icon_class_name": "fa7-solid:brain"
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "name": "InferModelPiece",
+    "description": "Runs inference on network monitoring data using a GRU model trained by TrainModelPiece.",
+    "dependency": {
+        "dockerfile": "Dockerfile.tensorflow-gpu"
+    },
+    "container_resources": {
+        "requests": {
+            "cpu": 100,
+            "memory": 128
+        },
+        "limits": {
+            "cpu": 500,
+            "memory": 512
+        }
+    },
+    "tags": [
+        "JSONL",
+        "inference",
+        "model"
+    ],
+    "style": {
+        "node_label": "Infer Model",
+        "icon_class_name": "fa7-solid:brain"
+    }
+}

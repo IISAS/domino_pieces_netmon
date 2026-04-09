@@ -1,15 +1,25 @@
 {
     "group0": {
         "dependency": {
-            "dockerfile": null,
-            "requirements_file": "requirements_0.txt"
+            "dockerfile": "Dockerfile",
+            "requirements_file": null
         },
         "pieces": [
-            "ExampleSimplePiece"
+            "TimeWindowAggregationPiece"
         ],
-        "secrets": [
-            "EXAMPLE_OPERATOR_SECRET_1"
+        "secrets": [],
+        "source_image": "ghcr.io/iisas/domino_pieces_netmon:development-group0"
+    },
+    "group1": {
+        "dependency": {
+            "dockerfile": "Dockerfile.tensorflow-gpu",
+            "requirements_file": null
+        },
+        "pieces": [
+            "InferModelPiece",
+            "TrainModelPiece"
         ],
-        "source_image": "ghcr.io/enter-your-registry-name-here/enter-your-repository-name-here:0.1.0-group0"
+        "secrets": [],
+        "source_image": "ghcr.io/iisas/domino_pieces_netmon:development-group1"
     }
 }
