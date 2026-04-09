@@ -35,20 +35,15 @@ class InputModel(BaseModel):
         description="Whether or not to use teacher forcing.",
         default=False,
     )
-    units: int = Field(
-        title="units",
-        description="The number of units in the model.",
+    gru_units: int = Field(
+        title="GRU units",
+        description="The number of GRU units in the model.",
         default=60
     )
     dropout_rate: float = Field(
         title="dropout.rate",
         description="The dropout rate for the model.",
         default=0.6,
-    )
-    forecast_steps: int = Field(
-        title="forecast.steps",
-        description="The number of timesteps to forecast for each observation.",
-        default=1,
     )
     klag_steps: int = Field(
         title="klag.steps",
@@ -78,11 +73,6 @@ class InputModel(BaseModel):
     tsg_stride: int = Field(
         title="tsg.stride",
         description="Period between successive output sequences. For stride s, consecutive output samples would be centered around data[i], data[i+s], data[i+2*s], etc.",
-        default=1,
-    )
-    tsg_batch_size: int = Field(
-        title="tsg.batch_size",
-        description="Number of timeseries samples in each batch (except maybe the last one).",
         default=1,
     )
     X: List[str] = Field(

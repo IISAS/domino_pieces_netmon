@@ -1,17 +1,14 @@
 import asyncio
-import datetime
 from pathlib import Path
-from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from domino.base_piece import BasePiece
 from tensorflow import keras
 
-from . import data_utils
-from . import utils
+from common.data_utils import read_jsonl_to_df_stream
+from common.time_series_pipeline import RelativeTimeSeriesPipeline
 from .models import InputModel, OutputModel
-from .time_series_pipeline import RelativeTimeSeriesPipeline
 
 
 class TrainModelPiece(BasePiece):
@@ -21,65 +18,23 @@ class TrainModelPiece(BasePiece):
             return Path(self.results_path) / self._metadata_['name']
         return Path(self.results_path)
 
-    def build_model(
-        self,
-        num_vars: int,
-        seq_len_in: int,
-        seq_len_out: int,
-        units: int,
-        batch_size: int,
-        dropout_rate: float,
-        teacher_forcing: bool,
-        loss_function: keras.losses.Loss,
-        metrics: List[keras.metrics.Metric],
-        learning_rate: float = 0.001,
-    ) -> keras.Model:
-
-        if teacher_forcing:
-            inputs = keras.Input(batch_shape=(batch_size, seq_len_in, num_vars))
-            h = keras.layers.GRU(units=units, stateful=True, return_sequences=True)(inputs)  # activation='tanh'
-            h = keras.layers.Dropout(dropout_rate)(h)
-            h = keras.layers.GRU(units=units, stateful=True, return_sequences=False)(h)
-            h = keras.layers.Dropout(dropout_rate)(h)
-        else:
-            inputs = keras.Input(shape=(seq_len_in, num_vars))
-            h = keras.layers.GRU(units=units, return_sequences=True)(inputs)
-            h = keras.layers.Dropout(dropout_rate)(h)
-            h = keras.layers.GRU(units=units, return_sequences=False)(h)
-            h = keras.layers.Dropout(dropout_rate)(h)
-
-        # Adding the output layer:
-        outputs = keras.layers.Dense(units=seq_len_out * num_vars, activation='sigmoid')(h)
-
-        model = keras.Model(
-            inputs=inputs,
-            outputs=outputs
-        )
-
-        # compile model
-        opt = keras.optimizers.Adam(learning_rate=learning_rate, clipnorm=1.0)
-        model.compile(
-            loss=loss_function,
-            optimizer=opt,
-            metrics=metrics,
-        )
-
-        return model
-
-    def load_data(self, input_file: Path, X, Y):
+    def load_data(self, input_file: Path, X, Y) -> pd.DataFrame:
         # resolve columns to load
         columns = list(set(X + Y))
         columns.sort()
 
         df = asyncio.run(
-            data_utils.read_jsonl_to_df_stream(
+            read_jsonl_to_df_stream(
                 file_path=input_file,
                 columns=columns
             )
         )
         if not df.empty:
-            df.index.name = "ts"  # restore index name if desired
-            df.index = pd.to_datetime(df.index.astype(int), unit="ms")
+            df.index.name = "ts"  # restore index name
+            df.index = pd.to_datetime(df.index.astype(int), unit="ms")  # timestep in milliseconds
+        return df
+
+    def preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
 
         # interpolate missing data
         df = df.interpolate(method="time")
@@ -98,19 +53,23 @@ class TrainModelPiece(BasePiece):
         best_model_file_path = self.get_results_path() / "model_best.keras"
 
         # load data
-        df = self.load_data(Path(input_data.input_file), input_data.X, input_data.Y)
+        df = self.load_data(
+            Path(input_data.input_file),
+            input_data.X,
+            input_data.Y
+        )
 
-        time_step_unit = datetime.timedelta(minutes=15)
+        # preprocess data
+        df = self.preprocess_data(df)
 
         pipeline = RelativeTimeSeriesPipeline(
-            seq_len_in=utils.timedelta_to_steps(datetime.timedelta(hours=1), time_step_unit),
-            seq_len_out=utils.timedelta_to_steps(time_step_unit, time_step_unit),
+            seq_len_in=input_data.seq_len_in,
+            seq_len_out=input_data.seq_len_out,
             roll_windows=[],
-            units=input_data.units,
+            gru_units=input_data.gru_units,
             dropout_rate=input_data.dropout_rate,
             epochs=input_data.epochs,
-            batch_size=input_data.batch_size,
-            time_step_unit=datetime.timedelta(minutes=15)  # step size of data
+            batch_size=input_data.batch_size
         )
 
         best_model_checkpoint = keras.callbacks.ModelCheckpoint(
@@ -163,13 +122,17 @@ class TrainModelPiece(BasePiece):
 
         self.logger.info('Training report created.')
 
-        return OutputModel(model_file=str(best_model_file_path))
+        return OutputModel(
+            best_model_file_path=str(best_model_file_path),
+            last_model_file_path=str(last_model_file_path),
+        )
 
 
 if __name__ == '__main__':
     input_data = InputModel.model_construct(
         **{
-            "input_file": str(Path(".") / "dry_run_results" / "TimeWindowAggregationPiece" / "PT10M.jsonl")
+            "input_file": str(Path(".") / "dry_run_results" / "TimeWindowAggregationPiece" / "PT10M.jsonl"),
+            "seq_len_in": 6,
         }
     )
     piece = TrainModelPiece(

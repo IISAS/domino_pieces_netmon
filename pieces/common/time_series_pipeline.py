@@ -1,5 +1,3 @@
-import datetime
-
 import numpy as np
 from keras.preprocessing.sequence import TimeseriesGenerator
 from sklearn.base import BaseEstimator, RegressorMixin
@@ -10,7 +8,6 @@ from tensorflow import keras
 
 
 class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
-    default_time_step_unit = datetime.timedelta(minutes=10)
 
     def __init__(
         self,
@@ -18,7 +15,7 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         seq_len_out=1,
         forecast_steps=1,
         roll_windows=(),
-        units=60,
+        gru_units=60,
         dropout_rate=0.6,
         learning_rate=1e-3,
         clipnorm=1.0,
@@ -31,20 +28,18 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         stl_period=None,
         tsg_sampling_rate=1,
         tsg_stride=1,
-        time_step_unit=default_time_step_unit,
         random_state: int = None,
     ):
         self.seq_len_in = seq_len_in
         self.forecast_steps = forecast_steps
         self.seq_len_out = seq_len_out
         self.roll_windows = roll_windows
-        self.units = units
+        self.gru_units = gru_units
         self.dropout_rate = dropout_rate
         self.learning_rate = learning_rate
         self.clipnorm = clipnorm
         self.epochs = epochs
         self.batch_size = batch_size
-        self.time_step_unit = time_step_unit
         self.diff = diff
         # STL
         self.stl_epsilon = stl_epsilon
@@ -56,16 +51,14 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         self.tsg_length = self.seq_len_in
         self.tsg_sampling_rate = tsg_sampling_rate
         self.tsg_stride = tsg_stride
-        self.tsg_batch_size = batch_size
-
-        self.random_state = random_state
-
         # model
         self.loss = keras.losses.MeanSquaredError()
         self.metrics = [self.loss, keras.metrics.MeanAbsoluteError()]
 
+        self.random_state = random_state
+
     # Difference transformer
-    def _difference(self, X):
+    def _difference(self, X: np.ndarray) -> np.ndarray:
         return X[1:] - X[:-1]
 
     def _stl_fit(self, X: np.ndarray):
@@ -90,7 +83,7 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         return X
 
     # Feature engineering
-    def _feature_engineer(self, X):
+    def _feature_engineer(self, X: np.ndarray) -> np.ndarray:
         n, m = X.shape
         feats = [X]
 
@@ -111,7 +104,7 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         return np.hstack(feats)
 
     # Sequence slicing
-    def _make_sequences(self, X, y, seq_len_in, seq_len_out):
+    def _make_sequences(self, X: np.ndarray, y: np.ndarray, seq_len_in, seq_len_out) -> tuple[np.ndarray, np.ndarray]:
         n_samples, n_features = X.shape
         sequences = []
         targets = []
@@ -167,9 +160,9 @@ class RelativeTimeSeriesPipeline(BaseEstimator, RegressorMixin):
         Build and return a compiled keras.Model.
         """
         inputs = keras.Input(shape=input_shape)
-        h = keras.layers.GRU(self.units, return_sequences=True)(inputs)
+        h = keras.layers.GRU(self.gru_units, return_sequences=True)(inputs)
         h = keras.layers.Dropout(self.dropout_rate)(h)
-        h = keras.layers.GRU(self.units, return_sequences=False)(h)
+        h = keras.layers.GRU(self.gru_units, return_sequences=False)(h)
         h = keras.layers.Dropout(self.dropout_rate)(h)
         outputs = keras.layers.Dense(output_dim, activation='linear')(h)
 

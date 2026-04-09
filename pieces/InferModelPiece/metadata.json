@@ -1,6 +1,6 @@
 {
-    "name": "TrainModelPiece",
-    "description": "Trains a GRU-based time series model on network monitoring data.",
+    "name": "InferModelPiece",
+    "description": "Runs inference on network monitoring data using a GRU model trained by TrainModelPiece.",
     "dependency": {
         "dockerfile": "Dockerfile-tensorflow-gpu"
     },
@@ -16,11 +16,11 @@
     },
     "tags": [
         "JSONL",
-        "TimeWindow",
-        "aggregation"
+        "inference",
+        "model"
     ],
     "style": {
-        "node_label": "Train Model",
+        "node_label": "Infer Model",
         "icon_class_name": "fa7-solid:brain"
     }
 }
