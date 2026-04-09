@@ -8,7 +8,7 @@
             "TimeWindowAggregationPiece"
         ],
         "secrets": [],
-        "source_image": "ghcr.io/iisas/domino_pieces_netmon:development-group0"
+        "source_image": "ghcr.io/iisas/domino_pieces_netmon:1.0.0-group0"
     },
     "group1": {
         "dependency": {
@@ -20,6 +20,6 @@
             "TrainModelPiece"
         ],
         "secrets": [],
-        "source_image": "ghcr.io/iisas/domino_pieces_netmon:development-group1"
+        "source_image": "ghcr.io/iisas/domino_pieces_netmon:1.0.0-group1"
     }
 }
