@@ -1,90 +1,11 @@
 {
-    "SortJSONLByFieldPiece": {
-        "name": "SortJSONLByFieldPiece",
+    "TimeWindowAggregationPiece": {
+        "name": "TimeWindowAggregationPiece",
         "dependency": {
             "dockerfile": "Dockerfile",
             "requirements_file": null
         },
         "tags": [
-            "processing",
-            "stream",
-            "jsonl"
-        ],
-        "style": {
-            "node_label": "Sort by Field",
-            "node_type": "default",
-            "node_style": {
-                "backgroundColor": "#ebebeb"
-            },
-            "useIcon": true,
-            "icon_class_name": "fa7-solid:arrow-down-1-9",
-            "iconStyle": {
-                "cursor": "pointer"
-            }
-        },
-        "description": "Sort JSONL records by a specified field (e.g., timestamp).",
-        "container_resources": {
-            "requests": {
-                "cpu": 100,
-                "memory": 128
-            },
-            "limits": {
-                "cpu": 500,
-                "memory": 512
-            }
-        },
-        "input_schema": {
-            "properties": {
-                "input_file": {
-                    "description": "Path to the input JSONL file containing messages to process.",
-                    "from_upstream": "always",
-                    "title": "Input JSONL File",
-                    "type": "string"
-                },
-                "field": {
-                    "description": "Name of the field in each JSON message that contains JSON to extract.",
-                    "from_upstream": "never",
-                    "title": "Field Name",
-                    "type": "string"
-                },
-                "num_workers": {
-                    "default": 4,
-                    "description": "Number of workers to use.",
-                    "from_upstream": "never",
-                    "title": "Number of Workers",
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "input_file",
-                "field"
-            ],
-            "title": "InputModel",
-            "type": "object"
-        },
-        "output_schema": {
-            "properties": {
-                "output_file": {
-                    "default": "messages.jsonl",
-                    "description": "Path to the final sorted JSONL output file.",
-                    "title": "output.file",
-                    "type": "string"
-                }
-            },
-            "title": "OutputModel",
-            "type": "object"
-        },
-        "secrets_schema": null,
-        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/SortJSONLByFieldPiece"
-    },
-    "TimeWindowAggregationJSONLPiece": {
-        "name": "TimeWindowAggregationJSONLPiece",
-        "dependency": {
-            "dockerfile": "Dockerfile",
-            "requirements_file": null
-        },
-        "tags": [
-            "JSONL",
             "TimeWindow",
             "aggregation"
         ],
@@ -119,6 +40,13 @@
                     "title": "input.file",
                     "type": "string"
                 },
+                "value_field": {
+                    "default": "value",
+                    "description": "Timestamp field to perform windowing over.",
+                    "from_upstream": "never",
+                    "title": "value.field",
+                    "type": "string"
+                },
                 "field": {
                     "default": "ts_end",
                     "description": "Timestamp field to perform windowing over.",
@@ -134,19 +62,11 @@
                     "type": "integer"
                 },
                 "data_cleaning_rules": {
-                    "anyOf": [
-                        {
-                            "additionalProperties": true,
-                            "type": "object"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "default": {},
+                    "default": "{\"conn\": {\"to_numeric\": {\"coerce\": [\"duration\", \"orig_bytes\", \"resp_bytes\"]}, \"fillna\": [{\"value\": 0.0, \"type\": \"float\", \"fields\": [\"duration\"]}, {\"value\": 0, \"type\": \"int\", \"fields\": [\"orig_bytes\", \"resp_bytes\"]}], \"astype\": {\"float\": [\"duration\"], \"int\": [\"orig_bytes\", \"resp_bytes\"]}}}",
                     "description": "Rules for cleaning dataset fields before aggregation.",
                     "from_upstream": "never",
                     "title": "data.cleaning.rules",
+                    "type": "string",
                     "widget": "codeeditor-json"
                 },
                 "aggregation_period": {
@@ -158,38 +78,19 @@
                     "type": "string"
                 },
                 "aggregation_rules": {
-                    "anyOf": [
-                        {
-                            "additionalProperties": true,
-                            "type": "object"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "default": {
-                        "agg": {},
-                        "groupby": {}
-                    },
+                    "default": "{\"agg\": {\"conn\": {\"uid\": [\"count\", \"nunique\"], \"orig_bytes\": [\"sum\"], \"resp_bytes\": [\"sum\"], \"duration\": [\"mean\"]}, \"dns\": {\"uid\": [\"count\", \"nunique\"], \"query\": [\"count\", \"nunique\"], \"proto\": [\"count\", \"nunique\"]}, \"sip\": {\"uid\": [\"count\", \"nunique\"], \"id.orig_h\": [\"count\", \"nunique\"], \"id.orig_p\": [\"count\", \"nunique\"], \"id.resp_h\": [\"count\", \"nunique\"], \"id.resp_p\": [\"count\", \"nunique\"]}, \"ssh\": {\"uid\": [\"count\", \"nunique\"]}, \"ssl\": {\"uid\": [\"count\", \"nunique\"]}, \"http\": {\"uid\": [\"count\", \"nunique\"]}}, \"groupby\": {\"dns\": {\"AA\": [\"count\"], \"RA\": [\"count\"], \"RD\": [\"count\"], \"TC\": [\"count\"], \"rejected\": [\"count\"]}}}",
                     "description": "JSON aggregation rules configuration.",
                     "from_upstream": "never",
                     "title": "aggregation.rules",
+                    "type": "string",
                     "widget": "codeeditor-json"
                 },
                 "net_direction": {
-                    "anyOf": [
-                        {
-                            "additionalProperties": true,
-                            "type": "object"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "default": {},
+                    "default": "{\"regex\": \"147\\\\.213\\\\..+\", \"field\": \"mods_dir\", \"orig_field\": \"id.orig_h\", \"resp_field\": \"id.resp_h\"}",
                     "description": "Configuration for computing network direction based on local network regex.",
                     "from_upstream": "never",
                     "title": "net.direction",
+                    "type": "string",
                     "widget": "codeeditor-json"
                 }
             },
@@ -214,34 +115,32 @@
             "type": "object"
         },
         "secrets_schema": null,
-        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/TimeWindowAggregationJSONLPiece"
+        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/TimeWindowAggregationPiece"
     },
-    "PartitionJSONLByFieldPiece": {
-        "name": "PartitionJSONLByFieldPiece",
+    "InferModelPiece": {
+        "name": "InferModelPiece",
         "dependency": {
-            "dockerfile": "Dockerfile",
+            "dockerfile": "Dockerfile.tensorflow-gpu",
             "requirements_file": null
         },
         "tags": [
             "JSONL",
-            "data-processing",
-            "partition",
-            "split",
-            "file-management"
+            "inference",
+            "model"
         ],
         "style": {
-            "node_label": "Partition JSONL",
+            "node_label": "Infer Model",
             "node_type": "default",
             "node_style": {
                 "backgroundColor": "#ebebeb"
             },
             "useIcon": true,
-            "icon_class_name": "fa7-solid:split",
+            "icon_class_name": "fa7-solid:brain",
             "iconStyle": {
                 "cursor": "pointer"
             }
         },
-        "description": "Partition a JSONL file into multiple JSONL files based on the value of a specified field.",
+        "description": "Runs inference on network monitoring data using a GRU model trained by TrainModelPiece.",
         "container_resources": {
             "requests": {
                 "cpu": 100,
@@ -254,72 +153,95 @@
         },
         "input_schema": {
             "properties": {
-                "input_file": {
-                    "description": "Path to the input JSONL file that will be partitioned.",
-                    "title": "Input JSONL File",
+                "model_file_path": {
+                    "description": "Path to the trained Keras model file (from TrainModelPiece).",
+                    "from_upstream": "always",
+                    "title": "model.file.path",
                     "type": "string"
                 },
-                "field": {
-                    "description": "Name of the field in each JSON object used to partition the JSONL file.",
-                    "from_upstream": "never",
-                    "title": "Partition Field",
+                "input_file": {
+                    "description": "Path to a JSONL file containing input data for inference.",
+                    "from_upstream": "always",
+                    "title": "input.file",
                     "type": "string"
+                },
+                "X": {
+                    "default": [
+                        "conn_count_uid_in",
+                        "conn_count_uid_out",
+                        "dns_count_uid_out",
+                        "http_count_uid_in",
+                        "ssl_count_uid_in"
+                    ],
+                    "description": "List of column names to use as input features. Must match the training configuration.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Feature Columns (X)",
+                    "type": "array"
+                },
+                "Y": {
+                    "default": [
+                        "conn_count_uid_in",
+                        "conn_count_uid_out",
+                        "dns_count_uid_out",
+                        "http_count_uid_in",
+                        "ssl_count_uid_in"
+                    ],
+                    "description": "List of column names used as targets. Must match the training configuration.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Columns (Y)",
+                    "type": "array"
                 }
             },
             "required": [
-                "input_file",
-                "field"
+                "model_file_path",
+                "input_file"
             ],
             "title": "InputModel",
             "type": "object"
         },
         "output_schema": {
             "properties": {
-                "partitions": {
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "description": "Mapping of partition names to their corresponding JSONL file paths.",
-                    "title": "Partitions Mapping",
-                    "type": "object"
+                "output_file": {
+                    "default": "predictions.jsonl",
+                    "description": "Path to the JSONL file containing model predictions.",
+                    "title": "output.file",
+                    "type": "string"
                 }
             },
-            "required": [
-                "partitions"
-            ],
             "title": "OutputModel",
             "type": "object"
         },
         "secrets_schema": null,
-        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/PartitionJSONLByFieldPiece"
+        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/InferModelPiece"
     },
-    "PartitionJSONLByZeekProtocolPiece": {
-        "name": "PartitionJSONLByZeekProtocolPiece",
+    "TrainModelPiece": {
+        "name": "TrainModelPiece",
         "dependency": {
-            "dockerfile": "Dockerfile",
+            "dockerfile": "Dockerfile.tensorflow-gpu",
             "requirements_file": null
         },
         "tags": [
             "JSONL",
-            "data-processing",
-            "partition",
-            "split",
-            "Zeek",
-            "Kafka"
+            "TimeWindow",
+            "aggregation"
         ],
         "style": {
-            "node_label": "Partition By Zeek Protocol",
+            "node_label": "Train Model",
             "node_type": "default",
             "node_style": {
                 "backgroundColor": "#ebebeb"
             },
             "useIcon": true,
-            "icon_class_name": "fa7-solid:split",
+            "icon_class_name": "fa7-solid:brain",
             "iconStyle": {
                 "cursor": "pointer"
             }
         },
-        "description": "Partition a JSONL file into multiple JSONL files based on the protocol value specified in the 'key' attribute of the Kafka message.",
+        "description": "Trains a GRU-based time series model on network monitoring data.",
         "container_resources": {
             "requests": {
                 "cpu": 100,
@@ -333,9 +255,99 @@
         "input_schema": {
             "properties": {
                 "input_file": {
-                    "description": "Path to the input JSONL file that will be partitioned.",
-                    "title": "Input JSONL File",
+                    "description": "Path to a file containing training data.",
+                    "title": "input.file",
                     "type": "string"
+                },
+                "split": {
+                    "default": 0.7,
+                    "description": "The proportion of training data to be used for training the model.",
+                    "title": "split.ratio",
+                    "type": "number"
+                },
+                "diff": {
+                    "default": false,
+                    "description": "Apply first-order differencing to the input sequence before training. Each value is replaced by its difference from the previous timestep: [x\u2081, x\u2082, ..., x\u2099] \u2192 [x\u2082\u2212x\u2081, x\u2083\u2212x\u2082, ..., x\u2099\u2212x\u2099\u208b\u2081].",
+                    "title": "differencing",
+                    "type": "boolean"
+                },
+                "seq_len_in": {
+                    "default": 24,
+                    "description": "Length of the model's input sequence (in number of timesteps).",
+                    "title": "seq.len.in",
+                    "type": "integer"
+                },
+                "seq_len_out": {
+                    "default": 1,
+                    "description": "Length of the model's output sequence (in number of timesteps).",
+                    "title": "seq.len.out",
+                    "type": "integer"
+                },
+                "teacher_forcing": {
+                    "default": false,
+                    "description": "Whether or not to use teacher forcing.",
+                    "title": "teacher.forcing",
+                    "type": "boolean"
+                },
+                "gru_units": {
+                    "default": 60,
+                    "description": "The number of GRU units in the model.",
+                    "title": "GRU units",
+                    "type": "integer"
+                },
+                "dropout_rate": {
+                    "default": 0.6,
+                    "description": "The dropout rate for the model.",
+                    "title": "dropout.rate",
+                    "type": "number"
+                },
+                "batch_size": {
+                    "default": 1,
+                    "description": "The batch size for training the model.",
+                    "title": "batch.size",
+                    "type": "integer"
+                },
+                "epochs": {
+                    "default": 100,
+                    "description": "The number of training epochs.",
+                    "title": "epochs",
+                    "type": "integer"
+                },
+                "epochs_patience": {
+                    "default": 10,
+                    "description": "The number of epochs to wait before stopping training.",
+                    "title": "epochs_patience",
+                    "type": "integer"
+                },
+                "X": {
+                    "default": [
+                        "conn_count_uid_in",
+                        "conn_count_uid_out",
+                        "dns_count_uid_out",
+                        "http_count_uid_in",
+                        "ssl_count_uid_in"
+                    ],
+                    "description": "List of column names to be used as input features for the model training (independent variables).",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Feature Columns (X)",
+                    "type": "array"
+                },
+                "Y": {
+                    "default": [
+                        "conn_count_uid_in",
+                        "conn_count_uid_out",
+                        "dns_count_uid_out",
+                        "http_count_uid_in",
+                        "ssl_count_uid_in"
+                    ],
+                    "description": "List of column names to be used as target variables for the model training (dependent variables).",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Columns (Y)",
+                    "type": "array"
                 }
             },
             "required": [
@@ -346,197 +358,23 @@
         },
         "output_schema": {
             "properties": {
-                "conn": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Records network connection activity observed by Zeek, capturing metadata about communications between originators and responders across both stateful (e.g., TCP) and stateless (e.g., UDP) protocols.",
-                    "title": "conn.log"
+                "best_model_file_path": {
+                    "default": "best_model.keras",
+                    "description": "Path to the saved best model.",
+                    "title": "best_model_file_path",
+                    "type": "string"
                 },
-                "dns": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Captures Domain Name System queries and responses used for hostname resolution.",
-                    "title": "dns.log"
-                },
-                "ftp": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Logs File Transfer Protocol sessions including commands and file transfers.",
-                    "title": "ftp.log"
-                },
-                "sip": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Captures Session Initiation Protocol signaling used in VoIP communications.",
-                    "title": "sip.log"
-                },
-                "smtp": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Records Simple Mail Transfer Protocol transactions related to email delivery.",
-                    "title": "smtp.log"
-                },
-                "ssh": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Captures Secure Shell connection metadata including authentication attempts and encryption parameters.",
-                    "title": "ssh.log"
-                },
-                "ssl": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Records TLS/SSL handshake metadata and certificate details from encrypted connections.",
-                    "title": "ssl.log"
-                },
-                "http": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "description": "Logs HTTP requests and responses exchanged between clients and web servers.",
-                    "title": "http.log"
+                "last_model_file_path": {
+                    "default": "last_model.keras",
+                    "description": "Path to the saved last model.",
+                    "title": "last_model_file_path",
+                    "type": "string"
                 }
             },
-            "required": [
-                "conn",
-                "dns",
-                "ftp",
-                "sip",
-                "smtp",
-                "ssh",
-                "ssl",
-                "http"
-            ],
             "title": "OutputModel",
             "type": "object"
         },
         "secrets_schema": null,
-        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/PartitionJSONLByZeekProtocolPiece"
-    },
-    "ExtractFieldAsJSONPiece": {
-        "name": "ExtractFieldAsJSONPiece",
-        "dependency": {
-            "dockerfile": "Dockerfile",
-            "requirements_file": null
-        },
-        "tags": [
-            "JSONL",
-            "data-processing",
-            "JSON-extraction"
-        ],
-        "style": {
-            "node_label": "Extract Field as JSON",
-            "node_type": "default",
-            "node_style": {
-                "backgroundColor": "#ebebeb"
-            },
-            "useIcon": true,
-            "icon_class_name": "fa7-solid:gear",
-            "iconStyle": {
-                "cursor": "pointer"
-            }
-        },
-        "description": "Extracts a specified field from each line of a JSONL file and writes the extracted values as JSON to an output file.",
-        "container_resources": {
-            "requests": {
-                "cpu": 100,
-                "memory": 128
-            },
-            "limits": {
-                "cpu": 500,
-                "memory": 512
-            }
-        },
-        "input_schema": {
-            "properties": {
-                "input_file": {
-                    "description": "Path to the input JSONL file containing messages to process.",
-                    "from_upstream": "always",
-                    "title": "Input JSONL File",
-                    "type": "string"
-                },
-                "field": {
-                    "description": "Name of the field in each JSON message that contains JSON to extract.",
-                    "from_upstream": "never",
-                    "title": "Field Name",
-                    "type": "string"
-                },
-                "num_workers": {
-                    "default": 4,
-                    "description": "Number of workers to use.",
-                    "from_upstream": "never",
-                    "title": "Number of Workers",
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "input_file",
-                "field"
-            ],
-            "title": "InputModel",
-            "type": "object"
-        },
-        "output_schema": {
-            "properties": {
-                "output_file": {
-                    "description": "Path to the output JSONL file containing extracted JSON values.",
-                    "title": "Output JSONL File Path",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "output_file"
-            ],
-            "title": "OutputModel",
-            "type": "object"
-        },
-        "secrets_schema": null,
-        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/ExtractFieldAsJSONPiece"
+        "source_url": "https://github.com/IISAS/domino_pieces_netmon/tree/main/pieces/TrainModelPiece"
     }
 }

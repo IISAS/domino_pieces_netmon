@@ -5,13 +5,21 @@
             "requirements_file": null
         },
         "pieces": [
-            "SortJSONLByFieldPiece",
-            "TimeWindowAggregationJSONLPiece",
-            "PartitionJSONLByFieldPiece",
-            "PartitionJSONLByZeekProtocolPiece",
-            "ExtractFieldAsJSONPiece"
+            "TimeWindowAggregationPiece"
         ],
         "secrets": [],
         "source_image": "ghcr.io/iisas/domino_pieces_netmon:development-group0"
+    },
+    "group1": {
+        "dependency": {
+            "dockerfile": "Dockerfile.tensorflow-gpu",
+            "requirements_file": null
+        },
+        "pieces": [
+            "InferModelPiece",
+            "TrainModelPiece"
+        ],
+        "secrets": [],
+        "source_image": "ghcr.io/iisas/domino_pieces_netmon:development-group1"
     }
 }
